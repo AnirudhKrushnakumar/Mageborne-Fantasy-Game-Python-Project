@@ -42,5 +42,5 @@ while not valid_input1:
         print("Please enter a valid option (A, B, or C)!")
 
 print("You have selected: " + player_class)
-name_p == input("Please enter a name for your character: ")
+name_p = input("Please enter a name for your character: ")
 print("Player description:\n Class: " + player_class + "\n Health: " + str(health_p) + "\n Strength: " + str(strength_p) + "\n Dexterity: " + str(dexterity_p) + "\n Constitution: " + str(constitution_p) + "\n Intelligence: " + str(intelligence_p) + "\n ========================================")
