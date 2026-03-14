@@ -4,7 +4,6 @@ import os
 
 # ── Tile emojis ───────────────────────────────────────────────
 FLOOR  = "🟫"
-PLAYER = "🧙"
 
 # ── Config ────────────────────────────────────────────────────
 GRID_SIZE   = 6
@@ -97,7 +96,8 @@ def spawn_monsters(counts):
 
 # ── Game class ────────────────────────────────────────────────
 class Game:
-    def __init__(self, monster_counts=None, player_hp=30, player_atk=5, player_atk_range=1):
+    def __init__(self, monster_counts=None, player_hp=30, player_atk=5,
+                 player_atk_range=1, player_emoji="🧙"):
         if monster_counts is None:
             monster_counts = {"goblin": 1, "archer": 1, "fairy": 1}
 
@@ -107,6 +107,7 @@ class Game:
         self.player_hp        = player_hp
         self.player_atk       = player_atk
         self.player_atk_range = player_atk_range
+        self.player_emoji     = player_emoji
         self.turn             = 1
         self.monsters         = spawn_monsters(monster_counts)
 
@@ -124,7 +125,7 @@ class Game:
             line = ""
             for col in range(GRID_SIZE):
                 if col == self.player_x and row == self.player_y:
-                    line += PLAYER
+                    line += self.player_emoji
                     continue
                 mon = next((m for m in self.monsters
                             if m.alive and m.x == col and m.y == row), None)
@@ -218,9 +219,9 @@ class Game:
 
 
 # ── Launch ────────────────────────────────────────────────────
-def start_encounter(counts, player_hp, player_atk, player_atk_range):
+def start_encounter(counts, player_hp, player_atk, player_atk_range, player_emoji):
     Game(counts, player_hp=player_hp, player_atk=player_atk,
-         player_atk_range=player_atk_range).run()
+         player_atk_range=player_atk_range, player_emoji=player_emoji).run()
 
 
 # ----------------------------------------
@@ -246,6 +247,7 @@ while not valid_input1:
         health_p       = int(10 * level_p + (constitution_p / 10))
         attack_p       = 4
         atk_range_p    = 1
+        player_emoji_p = "🤺"
         valid_input1   = True
 
     elif player_class_selection == "B":
@@ -257,6 +259,7 @@ while not valid_input1:
         health_p       = int(10 * level_p + (constitution_p / 10))
         attack_p       = 5
         atk_range_p    = 5
+        player_emoji_p = "🧙"
         valid_input1   = True
 
     elif player_class_selection == "C":
@@ -268,6 +271,7 @@ while not valid_input1:
         health_p       = int(10 * level_p + (constitution_p / 10))
         attack_p       = 3
         atk_range_p    = 3
+        player_emoji_p = "🥷🏻"
         valid_input1   = True
 
     else:
@@ -277,15 +281,15 @@ print("You have selected: " + player_class)
 name_p = input("Please enter a name for your character: ")
 print(
     "Player description:\n"
-    " Name: "         + name_p                + "\n"
-    " Class: "        + player_class          + "\n"
-    " Health: "       + str(health_p)         + "\n"
-    " Attack: "       + str(attack_p)         + "\n"
-    " Attack Range: " + str(atk_range_p)      + "\n"
-    " Strength: "     + str(strength_p)       + "\n"
-    " Dexterity: "    + str(dexterity_p)      + "\n"
-    " Constitution: " + str(constitution_p)   + "\n"
-    " Intelligence: " + str(intelligence_p)   + "\n"
+    " Name: "         + name_p              + "\n"
+    " Class: "        + player_class        + "\n"
+    " Health: "       + str(health_p)       + "\n"
+    " Attack: "       + str(attack_p)       + "\n"
+    " Attack Range: " + str(atk_range_p)    + "\n"
+    " Strength: "     + str(strength_p)     + "\n"
+    " Dexterity: "    + str(dexterity_p)    + "\n"
+    " Constitution: " + str(constitution_p) + "\n"
+    " Intelligence: " + str(intelligence_p) + "\n"
     " ========================================"
 )
 print("Welcome to Mageborne! Below is a little preface to the story (Beta Version)")
@@ -313,8 +317,8 @@ while not valid_input2:
             print("You find some torn fabric on the branches, leading towards a clearing. "
                   "Inside, stands 3 small goblins. Prepare for combat!")
             valid_input2 = True
-            start_encounter({"goblin": 3}, player_hp=health_p,
-                            player_atk=attack_p, player_atk_range=atk_range_p)
+            start_encounter({"goblin": 3}, player_hp=health_p, player_atk=attack_p,
+                            player_atk_range=atk_range_p, player_emoji=player_emoji_p)
         else:
             print("You don't notice any evidence of monsters, "
                   "maybe you should try again or a different tactic.")
@@ -331,16 +335,16 @@ while not valid_input2:
               "As you look around, you notice a new, smaller path leading towards a clearing. "
               "Inside, stands 3 small goblins. Prepare for combat!")
         valid_input2 = True
-        start_encounter({"goblin": 3}, player_hp=health_p,
-                        player_atk=attack_p, player_atk_range=atk_range_p)
+        start_encounter({"goblin": 3}, player_hp=health_p, player_atk=attack_p,
+                        player_atk_range=atk_range_p, player_emoji=player_emoji_p)
 
     elif path_1 == "C":
         print("You make some noise and lay out some aromatic food around you, hoping to attract "
               "a monster. After a few minutes, you hear hushed voices leading towards a clearing. "
               "Inside, stands 3 small goblins. Prepare for combat!")
         valid_input2 = True
-        start_encounter({"goblin": 3}, player_hp=health_p,
-                        player_atk=attack_p, player_atk_range=atk_range_p)
+        start_encounter({"goblin": 3}, player_hp=health_p, player_atk=attack_p,
+                        player_atk_range=atk_range_p, player_emoji=player_emoji_p)
 
     else:
         print("Please enter a valid option (A, B, or C)!")
