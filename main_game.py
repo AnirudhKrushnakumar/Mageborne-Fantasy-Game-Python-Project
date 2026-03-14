@@ -1,6 +1,7 @@
 import random
 import math
 import os
+import sys
 
 # ── Tile emojis ───────────────────────────────────────────────
 FLOOR  = "🟫"
@@ -216,6 +217,7 @@ class Game:
             self.turn += 1
         self.render()
         print("  💀 You have been defeated...")
+        sys.exit()
 
 
 # ── Launch ────────────────────────────────────────────────────
@@ -354,3 +356,61 @@ while not valid_input2:
             " B) Follow the trail\n"
             " C) Try to attract a monster\n"
         ).strip().upper()
+level_p = 2
+health_p = int(10 * level_p + (constitution_p / 10))
+print("Congratulations! You're now level 2")
+path_2 = input(
+    "What would you like to do?\n"
+    " A) Inspect Goblin footprints\n"
+    " B) Keep searching\n"
+).strip().upper()
+valid_input3 = False
+while not valid_input3:
+    if path_2 == "A":
+        print("You take a look at the footprints left by the Goblins. It's clear they aren't the culprits of whatever was near town. As you begin to wonder who else could be guilty, you hear giggling up ahead. As you follow the noise, you come up on another clearing, this time with 2 fairies inside. Prepare for combat!")
+        valid_input3 = True
+        start_encounter({"fairy": 2}, player_hp=health_p, player_atk=attack_p,
+                        player_atk_range=atk_range_p, player_emoji=player_emoji_p)
+    elif path_2 == "B":
+        print("As you look around, you notice some shimmering, magical dust on the branches. As you follow the dust's trail, you come up on another clearing, this time with 2 fairies inside. Prepare for combat!")
+        valid_input3 = True
+        start_encounter({"fairy": 2}, player_hp=health_p, player_atk=attack_p,
+                        player_atk_range=atk_range_p, player_emoji=player_emoji_p)
+    else:
+        print("Please enter a valid option (A or B)!")
+        path_2 = input(
+            "What would you like to do?\n"
+            " A) Inspect Goblin footprints\n"
+            " B) Keep searching\n"
+        ).strip().upper()
+level_p = 3
+health_p = int(10 * level_p + (constitution_p / 10))
+print("Congratulations! You're now level 3")
+path_3 = input(
+    "What would you like to do?\n"
+    " A) Inspect Fairy footprints\n"
+    " B) Keep searching\n"
+).strip().upper()
+valid_input3 = False
+while not valid_input3:
+    if path_3 == "A":
+        print("You take a look at the footprints left by the Fairies. It's clear they aren't the culprits of whatever was near town. As you begin to wonder who else could be guilty, you hear loud growling up ahead. As you follow the noise, you come up on another clearing, this time with a large Troll inside. Prepare for combat!")
+        valid_input3 = True
+        start_encounter({"troll": 1}, player_hp=health_p, player_atk=attack_p,
+                        player_atk_range=atk_range_p, player_emoji=player_emoji_p)
+    elif path_3 == "B":
+        print("As you look around, you notice a large piece of fabric strung on a tree's branches, along with smoke rising ahead. As you the smoke towards the fabric, you come up on another clearing. This one has a large Troll inside. Prepare for combat!")
+        valid_input3 = True
+        start_encounter({"troll": 1}, player_hp=health_p, player_atk=attack_p,
+                        player_atk_range=atk_range_p, player_emoji=player_emoji_p)
+    else:
+        print("Please enter a valid option (A or B)!")
+        path_3 = input(
+            "What would you like to do?\n"
+            " A) Inspect Fairy footprints\n"
+            " B) Keep searching\n"
+        ).strip().upper()
+
+print("Once the Troll has been defeated, it's evident it was the culprit of those monster tracks.\n"
+      "You head back to town to recieve your payment and deliver the good news, tired from your day of monster fighting.\n" \
+      "\n Congrats! You've successfully completed Mageborne: Beta Test Release! The full Godot version will be released soon, and the full base game afterwards.")
