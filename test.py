@@ -1,4 +1,3 @@
-import random
 import math
 import os
 
@@ -11,15 +10,16 @@ GRID_SIZE   = 6
 MOVE_BUDGET = 2
 
 # ── Monster roster ────────────────────────────────────────────
+# Define all monster types here. Add new ones freely.
 MONSTER_TYPES = {
-    "goblin":  dict(emoji="👹", hp=6,  attack=3, chase_radius=5, atk_min=1, atk_max=1),
+    "goblin":  dict(emoji="👹", hp=12, attack=4, chase_radius=5, atk_min=1, atk_max=1),
     "archer":  dict(emoji="🏹", hp=7,  attack=3, chase_radius=5, atk_min=2, atk_max=3),
-    "fairy":   dict(emoji="🧿", hp=8,  attack=5, chase_radius=6, atk_min=3, atk_max=4),
+    "mage":    dict(emoji="🧿", hp=8,  attack=5, chase_radius=6, atk_min=3, atk_max=4),
     "skeleton":dict(emoji="💀", hp=10, attack=3, chase_radius=3, atk_min=1, atk_max=1),
     "dragon":  dict(emoji="🐉", hp=25, attack=8, chase_radius=6, atk_min=2, atk_max=5),
     "snake":   dict(emoji="🐍", hp=6,  attack=2, chase_radius=4, atk_min=1, atk_max=1),
     "troll":   dict(emoji="🧌", hp=20, attack=6, chase_radius=3, atk_min=1, atk_max=1),
-    "witch":   dict(emoji="🧙‍♀️", hp=9,  attack=7, chase_radius=6, atk_min=4, atk_max=5),
+    "witch":   dict(emoji="🧙‍♀️", hp=9, attack=7, chase_radius=6, atk_min=4, atk_max=5),
 }
 
 
@@ -60,14 +60,25 @@ class Monster:
                 return
 
     def can_attack(self, px, py):
-        return self.atk_min <= math.dist((self.x, self.y), (px, py)) <= self.atk_max
+        return self.atk_min <= math.dist((self.x,self.y),(px,py)) <= self.atk_max
 
     def is_adjacent(self, px, py):
-        return abs(self.x - px) <= 1 and abs(self.y - py) <= 1
+        return abs(self.x-px) <= 1 and abs(self.y-py) <= 1
 
 
 # ── Spawn helper ──────────────────────────────────────────────
-def spawn_monsters(counts):
+def spawn_monsters(counts: dict[str, int]) -> list[Monster]:
+    """
+    Build a monster list from a name→count dict.
+    Monsters are placed at random non-overlapping tiles,
+    kept away from the player's starting corner (0,0).
+
+    Example:
+        spawn_monsters({"goblin": 2, "archer": 1, "dragon": 1})
+    """
+    import random
+
+    # All tiles except the player's starting 2x2 corner
     safe_tiles = [
         (x, y)
         for x in range(GRID_SIZE)
@@ -79,8 +90,6 @@ def spawn_monsters(counts):
 
     monsters = []
     for name, count in counts.items():
-        if count == 0:
-            continue
         if name not in MONSTER_TYPES:
             raise ValueError(f"Unknown monster type '{name}'. "
                              f"Choose from: {list(MONSTER_TYPES.keys())}")
@@ -97,18 +106,27 @@ def spawn_monsters(counts):
 
 # ── Game class ────────────────────────────────────────────────
 class Game:
-    def __init__(self, monster_counts=None, player_hp=30, player_atk=5, player_atk_range=1):
-        if monster_counts is None:
-            monster_counts = {"goblin": 1, "archer": 1, "fairy": 1}
+    def __init__(self, monster_counts: dict[str, int] | None = None):
+        """
+        monster_counts: dict of monster name → how many to spawn.
+        Defaults to a balanced starter encounter if not provided.
 
-        self.grid             = [[FLOOR] * GRID_SIZE for _ in range(GRID_SIZE)]
-        self.player_x         = 0
-        self.player_y         = 0
-        self.player_hp        = player_hp
-        self.player_atk       = player_atk
-        self.player_atk_range = player_atk_range
-        self.turn             = 1
-        self.monsters         = spawn_monsters(monster_counts)
+        Examples:
+            Game()                                         # default encounter
+            Game({"goblin": 3})                            # goblin horde
+            Game({"archer": 2, "mage": 1})                 # ranged squad
+            Game({"goblin": 1, "archer": 1, "dragon": 1})  # mixed
+        """
+        if monster_counts is None:
+            monster_counts = {"goblin": 1, "archer": 1, "mage": 1}
+
+        self.grid      = [[FLOOR] * GRID_SIZE for _ in range(GRID_SIZE)]
+        self.player_x  = 0
+        self.player_y  = 0
+        self.player_hp = 30
+        self.player_atk= 5
+        self.turn      = 1
+        self.monsters  = spawn_monsters(monster_counts)
 
     # ── Helpers ───────────────────────────────────────────────
     def occupied_tiles(self, exclude=None):
@@ -119,37 +137,34 @@ class Game:
         os.system("cls" if os.name == "nt" else "clear")
         alive = [m for m in self.monsters if m.alive]
         print(f"  Turn {self.turn}  |  ❤️  HP: {self.player_hp}  |  ⚔️  ATK: {self.player_atk}"
-              f"  |  🎯 Range: {self.player_atk_range}  |  👾 Remaining: {len(alive)}\n")
+              f"  |  👾 Remaining: {len(alive)}\n")
         for row in range(GRID_SIZE):
             line = ""
             for col in range(GRID_SIZE):
                 if col == self.player_x and row == self.player_y:
-                    line += PLAYER
-                    continue
+                    line += PLAYER; continue
                 mon = next((m for m in self.monsters
-                            if m.alive and m.x == col and m.y == row), None)
+                            if m.alive and m.x==col and m.y==row), None)
                 line += mon.emoji if mon else self.grid[row][col]
             print(line)
         print()
 
     # ── Player movement ───────────────────────────────────────
     def player_turn(self):
-        dirs = {"w": (0,-1), "s": (0,1), "a": (-1,0), "d": (1,0)}
+        dirs = {"w":(0,-1),"s":(0,1),"a":(-1,0),"d":(1,0)}
         moves_left = MOVE_BUDGET
         while moves_left > 0:
             self.render()
             print(f"  Move phase — {moves_left} step(s) left")
             print("  [W/A/S/D] move   [Enter] skip remaining steps\n")
             key = input("  > ").strip().lower()
-            if key == "":
-                break
-            if key not in dirs:
-                continue
+            if key == "": break
+            if key not in dirs: continue
             dx, dy = dirs[key]
-            nx, ny = self.player_x + dx, self.player_y + dy
+            nx, ny = self.player_x+dx, self.player_y+dy
             if not (0 <= nx < GRID_SIZE and 0 <= ny < GRID_SIZE):
                 print("  Can't move there."); input("  [Enter]"); continue
-            if any(m.alive and m.x == nx and m.y == ny for m in self.monsters):
+            if any(m.alive and m.x==nx and m.y==ny for m in self.monsters):
                 print("  A monster is blocking that tile!"); input("  [Enter]"); continue
             self.player_x, self.player_y = nx, ny
             moves_left -= 1
@@ -159,15 +174,13 @@ class Game:
         self.render()
         print("  Action phase")
         print("  [1] Attack   [2] Rest (+3 HP)   [3] Wait\n")
-        targets = [
-            m for m in self.monsters
-            if m.alive and math.dist((self.player_x, self.player_y), (m.x, m.y)) <= self.player_atk_range
-        ]
+        targets = [m for m in self.monsters
+                   if m.alive and m.is_adjacent(self.player_x, self.player_y)]
         if targets:
-            print("  Monsters in range: "
+            print("  Adjacent monsters: "
                   + "  ".join(f"{m.emoji}({m.hp}hp)" for m in targets))
         else:
-            print(f"  No monsters in range (your attack range is {self.player_atk_range} tile(s)).")
+            print("  No monsters adjacent (your attack range is 1 tile).")
         print()
         choice = input("  > ").strip()
         if choice == "1":
@@ -176,13 +189,13 @@ class Game:
             else:
                 t = targets[0]
                 t.hp -= self.player_atk
-                print(f"  You hit {t.emoji} for {self.player_atk} dmg! ({max(t.hp, 0)} HP left)")
+                print(f"  You hit {t.emoji} for {self.player_atk} dmg! ({max(t.hp,0)} HP left)")
                 if t.hp <= 0:
                     t.alive = False
                     print(f"  {t.emoji} defeated! 💥")
             input("  [Enter]")
         elif choice == "2":
-            self.player_hp = min(self.player_hp + 3, 30)
+            self.player_hp = min(self.player_hp+3, 30)
             print(f"  You rest. HP: {self.player_hp}")
             input("  [Enter]")
 
@@ -190,8 +203,7 @@ class Game:
     def monster_turn(self):
         attacked = False
         for m in self.monsters:
-            if not m.alive:
-                continue
+            if not m.alive: continue
             blocked = self.occupied_tiles(exclude=m)
             blocked.add((self.player_x, self.player_y))
             m.move_toward(self.player_x, self.player_y, blocked)
@@ -218,135 +230,15 @@ class Game:
 
 
 # ── Launch ────────────────────────────────────────────────────
-def start_encounter(counts, player_hp, player_atk, player_atk_range):
-    Game(counts, player_hp=player_hp, player_atk=player_atk,
-         player_atk_range=player_atk_range).run()
-
-
-# ----------------------------------------
-# Actual game code beyond this point!
-# ----------------------------------------
-level_p = 1
-
-valid_input1 = False
-while not valid_input1:
-    player_class_selection = input(
-        "Please choose one of the classes below:\n"
-        " A) Warrior: A martial fighter, focusing on strength.\n"
-        " B) Mage: An arcane user of magic, focusing on intelligence but with low health.\n"
-        " C) Thief: A cunning rogue, focusing on stealth to sneak around.\n"
-    ).strip().upper()
-
-    if player_class_selection == "A":
-        player_class   = "Warrior"
-        strength_p     = 15
-        dexterity_p    = 14
-        constitution_p = 13
-        intelligence_p = 8
-        health_p       = int(10 * level_p + (constitution_p / 10))
-        attack_p       = 4
-        atk_range_p    = 1
-        valid_input1   = True
-
-    elif player_class_selection == "B":
-        player_class   = "Mage"
-        strength_p     = 8
-        dexterity_p    = 12
-        constitution_p = 13
-        intelligence_p = 15
-        health_p       = int(10 * level_p + (constitution_p / 10))
-        attack_p       = 5
-        atk_range_p    = 5
-        valid_input1   = True
-
-    elif player_class_selection == "C":
-        player_class   = "Thief"
-        strength_p     = 12
-        dexterity_p    = 15
-        constitution_p = 13
-        intelligence_p = 14
-        health_p       = int(10 * level_p + (constitution_p / 10))
-        attack_p       = 3
-        atk_range_p    = 3
-        valid_input1   = True
-
-    else:
-        print("Please enter a valid option (A, B, or C)!")
-
-print("You have selected: " + player_class)
-name_p = input("Please enter a name for your character: ")
-print(
-    "Player description:\n"
-    " Name: "         + name_p                + "\n"
-    " Class: "        + player_class          + "\n"
-    " Health: "       + str(health_p)         + "\n"
-    " Attack: "       + str(attack_p)         + "\n"
-    " Attack Range: " + str(atk_range_p)      + "\n"
-    " Strength: "     + str(strength_p)       + "\n"
-    " Dexterity: "    + str(dexterity_p)      + "\n"
-    " Constitution: " + str(constitution_p)   + "\n"
-    " Intelligence: " + str(intelligence_p)   + "\n"
-    " ========================================"
-)
-print("Welcome to Mageborne! Below is a little preface to the story (Beta Version)")
-print(
-    f"Hello, {name_p}. You have been hired by the townspeople of Emberpine to investigate "
-    "the nearby woods, after large monster tracks were found.\n"
-    "The game starts with you at the entrance of the woods, where you'll walk through "
-    "and face different types of monsters."
-)
-print("========================================\n")
-
-path_1 = input(
-    "You enter the woods, what would you like to do?\n"
-    " A) Search for clues\n"
-    " B) Follow the trail\n"
-    " C) Try to attract a monster\n"
-).strip().upper()
-
-valid_input2 = False
-while not valid_input2:
-    if path_1 == "A":
-        roll = random.randint(1, 20) + (intelligence_p / 10)
-        print("You rolled a " + str(roll) + " total for perception.")
-        if roll >= 14:
-            print("You find some torn fabric on the branches, leading towards a clearing. "
-                  "Inside, stands 3 small goblins. Prepare for combat!")
-            valid_input2 = True
-            start_encounter({"goblin": 3}, player_hp=health_p,
-                            player_atk=attack_p, player_atk_range=atk_range_p)
-        else:
-            print("You don't notice any evidence of monsters, "
-                  "maybe you should try again or a different tactic.")
-            path_1 = input(
-                "What would you like to do?\n"
-                " A) Search for clues\n"
-                " B) Follow the trail\n"
-                " C) Try to attract a monster\n"
-            ).strip().upper()
-
-    elif path_1 == "B":
-        print("You follow the trail and eventually find a log laying across it, "
-              "a further look reveals that it was deliberately placed there. "
-              "As you look around, you notice a new, smaller path leading towards a clearing. "
-              "Inside, stands 3 small goblins. Prepare for combat!")
-        valid_input2 = True
-        start_encounter({"goblin": 3}, player_hp=health_p,
-                        player_atk=attack_p, player_atk_range=atk_range_p)
-
-    elif path_1 == "C":
-        print("You make some noise and lay out some aromatic food around you, hoping to attract "
-              "a monster. After a few minutes, you hear hushed voices leading towards a clearing. "
-              "Inside, stands 3 small goblins. Prepare for combat!")
-        valid_input2 = True
-        start_encounter({"goblin": 3}, player_hp=health_p,
-                        player_atk=attack_p, player_atk_range=atk_range_p)
-
-    else:
-        print("Please enter a valid option (A, B, or C)!")
-        path_1 = input(
-            "What would you like to do?\n"
-            " A) Search for clues\n"
-            " B) Follow the trail\n"
-            " C) Try to attract a monster\n"
-        ).strip().upper()
+if __name__ == "__main__":
+    # ↓ Change this to whatever encounter you want ↓
+    Game({
+        "goblin":  3,
+        "archer":  0,
+        "mage":    0,
+        "skeleton":0,
+        "dragon":  0,
+        "snake":   0,
+        "troll":   0,
+        "witch":   0,
+    }).run()
